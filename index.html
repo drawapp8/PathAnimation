@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Path Animation Demo</title>
+<script src="interpolator.js"> </script>
+<script src="path-animation.js"> </script>
+
+<script>
+
+function drawObjOnPath(ctx, path, dt) {
+	ctx.lineWidth = 1;
+	ctx.strokeStyle = "Green";
+	ctx.beginPath();
+	var p = path.getPosition(dt);
+	var angle = path.getDirection(dt);
+	ctx.save();
+	ctx.translate(p.x, p.y);
+	ctx.rotate(angle);
+	ctx.translate(-p.x, -p.y);
+	ctx.rect(p.x-10, p.y-10, 20, 20);
+	ctx.restore();
+	ctx.stroke();
+}
+
+function drawPath(ctx, path, dt) {
+	ctx.beginPath();
+	ctx.lineWidth = 2;
+	ctx.strokeStyle = "#f0f0f0";
+	path.draw(ctx);
+	ctx.stroke();
+	drawObjOnPath(ctx, path, dt);
+}
+
+function createPathAnimation(canvas) {
+	var n = 6;
+	var border = 10;
+	var w = canvas.width - 2 * border;
+	var interpolator = new AccDecelerateInterpolator();
+	var pathAnimation = new PathAnimation(border, border);
+
+	for(var i = 0; i <= n; i++) {
+		var p = pathAnimation.getEndPoint();
+		var y = i%2 ? border : 100; 
+		var x = i * (w/n) + border;
+		
+		pathAnimation.addLine(300, interpolator, p, {x:x, y:y});
+	}
+
+	var p = pathAnimation.getEndPoint();
+	pathAnimation.addLine(1000, interpolator, p, {x:border, y:border});
+	pathAnimation.addLine(1000, interpolator, {x:border, y:100}, {x:w, y:border});
+	
+	var r = w/n*0.5;
+	for(var i = 1; i < n; i++) {
+		var y = 100; 
+		var x = i * (w/n) + border;
+		
+		pathAnimation.addArc(200, interpolator, {x:x, y:y}, r, Math.PI, Math.PI * 0.5);
+		pathAnimation.addArc(200, interpolator, {x:x, y:y}, r, Math.PI * 0.5, 0);
+	}
+	
+	var r = w/n*0.5;
+	for(var i = 1; i < n; i++) {
+		var y = 100; 
+		var x = i * (w/n) + border;
+		
+		pathAnimation.addArc(200, interpolator, {x:x, y:y}, r, Math.PI, Math.PI * 1.5);
+		pathAnimation.addArc(200, interpolator, {x:x, y:y}, r, Math.PI * 1.5, 2 * Math.PI);
+	}
+
+	pathAnimation.addPara(1500, interpolator, {x:0, y:0}, {x:0, y:600}, {x:500, y:0});
+	pathAnimation.addPara(1000, interpolator, pathAnimation.getEndPoint(), {x:-600, y:0}, {x:0, y:-500});
+
+	pathAnimation.addSin(4000, interpolator, {x:0, y:300}, 200, 200, 100, 0);
+	pathAnimation.addSin(4000, interpolator, {x:0, y:300}, 200, 200, 100, Math.PI * 0.5);	
+	pathAnimation.addSin(4000, interpolator, {x:0, y:300}, 200, 200, 100, Math.PI);
+	pathAnimation.addSin(4000, interpolator, {x:0, y:300}, 200, 200, 100, Math.PI);
+	pathAnimation.addBezier(1000, interpolator, {x:10, y:800}, {x:100, y:700}, {x:600, y:600}, {x:800, y:10});
+	pathAnimation.addBezier(1000, interpolator, {x:800, y:10}, {x:100, y:100}, {x:300, y:610}, {x:10, y:800});
+	pathAnimation.addQuad(1000, interpolator, {x:10, y:400}, {x:700, y:400}, {x:800, y:0});
+	pathAnimation.addQuad(1000, interpolator, {x:10, y:10}, {x:700, y:400}, {x:800, y:800});
+
+	return pathAnimation;
+}
+
+var canvas;
+var gPathAnimation;
+var startTime = Date.now();
+
+function draw() {
+	var ctx = canvas.getContext("2d");
+	var dt =  Date.now() - startTime;
+	
+	ctx.fillStyle = "White";
+	ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+	drawPath(ctx, gPathAnimation, dt);
+
+	setTimeout(draw, 20);
+}
+
+window.onload = function() {
+	canvas = document.getElementById("canvas");
+	gPathAnimation = createPathAnimation(canvas);
+	setTimeout(draw, 20);
+}
+</script>
+</head>
+<body>
+<canvas id="canvas" width="800" height="800" style="border: 1px yellow solid" />
+</body>
+</html>
+
